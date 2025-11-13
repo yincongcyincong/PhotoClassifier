@@ -147,7 +147,7 @@ async function getImageLink(category, num) {
             idxMap.set(chooseIdx, true);
             res.push({
                 type: "text",
-                text: categoryData[chooseIdx].url + " \n\n "
+                text: categoryData[chooseIdx].url + "  "
             });
         }
     }
