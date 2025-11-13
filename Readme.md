@@ -37,8 +37,6 @@ AI 服务为图片打上多重标签，并自动将图片上传到指定的 GitH
 
 1. **Go 环境：** 确保您已安装 Go 1.24 或更高版本。
 2. **API Key：** 准备好您选择的大模型（如 Gemini 或 OpenAI）的 API Key。
-3. **GitHub Token：** 按照 [GitHub PAT 获取教程](https://www.google.com/search?q=%23github-token-%E8%8E%B7%E5%8F%96)
-   获取一个具有 `repo` 写入权限的 Personal Access Token。
 
 ### 步骤二：创建配置文件
 

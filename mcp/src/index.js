@@ -140,18 +140,26 @@ async function getImageLink(category, num) {
     }
 
     const res = [];
-    const idxMap = new Map();
-    while (idxMap.size < num) {
-        const chooseIdx = Math.floor(Math.random() * (categoryData.length + 1))
-        if (!idxMap.has(chooseIdx)) {
-            idxMap.set(chooseIdx, true);
+    if (n > categoryData.length) {
+        for (let i = 0; i < categoryData.length; i++) {
             res.push({
                 type: "text",
-                text: categoryData[chooseIdx].url + "  "
+                text: categoryData[i].url + "  "
             });
         }
+    } else {
+        const idxMap = new Map();
+        while (idxMap.size < num) {
+            const chooseIdx = Math.floor(Math.random() * (categoryData.length + 1))
+            if (!idxMap.has(chooseIdx)) {
+                idxMap.set(chooseIdx, true);
+                res.push({
+                    type: "text",
+                    text: categoryData[chooseIdx].url + "  "
+                });
+            }
+        }
     }
-
 
     return {
         content: res,
