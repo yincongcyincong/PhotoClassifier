@@ -3,13 +3,14 @@ package main
 import (
 	"bytes"
 	"context"
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"net/url"
+	"os"
 	"path/filepath"
 	"regexp"
 	"strconv"
@@ -33,9 +34,7 @@ type Config struct {
 	ModelToken     string `json:"model_token"`      // API Key
 	LLMType        string `json:"llm_type"`         // gemini / openai
 	ModelCustomURL string `json:"model_custom_url"` // 如果模型有自定义地址
-	GitHubRepoURL  string `json:"git_hub_repo_url"` // "owner/repo" 格式
-	GitHubToken    string `json:"github_token"`     // GitHub Personal Access Token
-	GitHubDir      string `json:"github_dir"`       // 图片上传到 GitHub 的目录 (例如 "classified/images")
+	Dir            string `json:"dir"`              // 的目录
 	TargetClasses  string `json:"target_classes"`   // 目标图片类别列表 (逗号分隔)
 	ModelName      string `json:"model_name"`       // 模型名称
 	ProxyURL       string `json:"proxy_url"`        // 代理地址 (可选)
@@ -60,7 +59,7 @@ type CateInfo struct {
 // ClassifyAndUpload 主函数：遍历文件夹，调用模型，上传图片
 func ClassifyAndUpload(cfg Config) {
 	// 确保关键参数不为空
-	if cfg.ImageFolder == "" || cfg.ModelToken == "" || cfg.LLMType == "" || cfg.GitHubToken == "" || cfg.GitHubRepoURL == "" {
+	if cfg.ImageFolder == "" || cfg.ModelToken == "" || cfg.LLMType == "" {
 		log.Fatal("错误：缺少必要的参数 (如文件夹、API Token 或 GitHub Token/RepoURL)。请使用 -h 查看用法。")
 	}
 	
@@ -149,9 +148,9 @@ func ClassifyAndUpload(cfg Config) {
 			
 			// 构建上传路径: GitHubDir / 类别 / 文件名
 			fname := strconv.Itoa(classMap[cat]) + filepath.Ext(filePath)
-			uploadPath := filepath.Join(cfg.GitHubDir, safeCat, fname)
+			uploadPath := filepath.Join(config.Dir, safeCat, fname)
 			
-			err = uploadFileToGitHub(filePath, cfg.GitHubRepoURL, cfg.GitHubToken, uploadPath, cat)
+			err = saveFileLocally(filePath, uploadPath)
 			if err != nil {
 				log.Printf("  -> 上传图片 %s 到 GitHub/%s 失败: %v", file.Name(), safeCat, err)
 			} else {
@@ -192,6 +191,7 @@ func classifyImageWithModel(ctx context.Context, imageContent []byte, content st
 		return nil, 0, err
 	}
 	
+	time.Sleep(2 * time.Second)
 	if result.Text() != "" {
 		matches := cateRegex.FindAllString(result.Text(), -1)
 		cateRes := new(CateInfo)
@@ -208,48 +208,43 @@ func classifyImageWithModel(ctx context.Context, imageContent []byte, content st
 	
 }
 
-// uploadFileToGitHub 上传文件到 GitHub 仓库
-func uploadFileToGitHub(filePath, repoURL, token, gitHubPath, commitCategory string) error {
-	// ... (此函数内容与之前相同，省略以保持简洁)
-	imgData, err := ioutil.ReadFile(filePath)
-	if err != nil {
-		return fmt.Errorf("读取图片文件失败: %w", err)
-	}
-	encodedContent := base64.StdEncoding.EncodeToString(imgData)
-	
-	commitMessage := fmt.Sprintf("[PhotoClassifier] Classify and upload %s to category %s", filepath.Base(filePath), commitCategory)
-	requestBody := GitHubContentRequest{
-		Message: commitMessage,
-		Content: encodedContent,
-	}
-	
-	reqBodyBytes, _ := json.Marshal(requestBody)
-	apiURL := fmt.Sprintf("https://api.github.com/repos/%s/contents/%s", repoURL, gitHubPath)
-	
-	req, err := http.NewRequest("PUT", apiURL, bytes.NewBuffer(reqBodyBytes))
-	if err != nil {
-		return fmt.Errorf("创建 HTTP 请求失败: %w", err)
-	}
-	
-	req.Header.Set("Authorization", "token "+token)
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Accept", "application/vnd.github.v3+json")
-	
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		return fmt.Errorf("发送 GitHub PUT 请求失败: %w", err)
-	}
-	defer resp.Body.Close()
-	
-	if resp.StatusCode >= 400 {
-		body, _ := ioutil.ReadAll(resp.Body)
-		// 检查是否是“文件已存在”的错误，如果需要支持更新，则需要先GET获取SHA
-		if resp.StatusCode == 422 && strings.Contains(string(body), `"sha"`) {
-			return fmt.Errorf("GitHub API 返回错误: 文件可能已存在。当前代码不支持更新现有文件，需要先获取 SHA 值")
+func saveFileLocally(filePath, localTargetPath string) error {
+	// 1. 确保目标路径的目录存在
+	targetDir := filepath.Dir(localTargetPath)
+	if _, err := os.Stat(targetDir); os.IsNotExist(err) {
+		// 递归创建所有必要的目录
+		err := os.MkdirAll(targetDir, 0755) // 0755 是常用的目录权限
+		if err != nil {
+			return fmt.Errorf("创建目标目录失败: %s, 错误: %w", targetDir, err)
 		}
-		return fmt.Errorf("GitHub API 返回错误状态码: %d, 响应体: %s", resp.StatusCode, string(body))
+	} else if err != nil {
+		return fmt.Errorf("检查目标目录状态失败: %s, 错误: %w", targetDir, err)
 	}
+	
+	// 2. 打开源文件
+	sourceFile, err := os.Open(filePath)
+	if err != nil {
+		return fmt.Errorf("打开源文件失败: %w", err)
+	}
+	defer sourceFile.Close() // 确保文件句柄在使用完毕后关闭
+	
+	// 3. 创建或截断目标文件
+	// os.Create 会创建一个新文件。如果文件已存在，它会截断（清空）它。
+	destinationFile, err := os.Create(localTargetPath)
+	if err != nil {
+		return fmt.Errorf("创建目标文件失败: %w", err)
+	}
+	defer destinationFile.Close() // 确保文件句柄在使用完毕后关闭
+	
+	// 4. 复制文件内容
+	// io.Copy 会高效地将源文件的内容复制到目标文件
+	bytesCopied, err := io.Copy(destinationFile, sourceFile)
+	if err != nil {
+		return fmt.Errorf("复制文件内容失败: %w", err)
+	}
+	
+	// 可选：打印日志确认
+	fmt.Printf("成功将文件 '%s' 复制到 '%s' (%d bytes)\n", filepath.Base(filePath), localTargetPath, bytesCopied)
 	
 	return nil
 }

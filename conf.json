@@ -1,11 +1,9 @@
 {
   "image_folder": "./tmp",
-  "model_token": "xxx",
+  "model_token": "AIzaSyCcDKcYGzdsCi68FualKxgPuMlPQzFOeyU",
   "llm_type": "gemini",
   "model_custom_url": "",
-  "git_hub_repo_url": "yincongcyincong/PhotoClassifier",
-  "github_token": "ghp_xxx",
-  "github_dir": "photos",
+  "dir": "photos",
   "target_classes": "萝莉,JK,御姐,自拍,表情包,性感",
   "model_name": "gemini-2.0-flash",
   "proxy_url": "http://127.0.0.1:7890",
