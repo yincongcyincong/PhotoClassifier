@@ -1,14 +1,14 @@
 {
-  "name": "@yincongcyincong/victoriametrics-mcp-server",
-  "version": "1.0.7",
-  "description": "mcp server for victoriametrics",
+  "name": "@yincongcyincong/photoclassifier",
+  "version": "1.0.0",
+  "description": "mcp server for PhotoClassifier",
   "type": "module",
   "main": "src/index.js",
   "keywords": [],
   "author": "",
   "license": "ISC",
   "bin": {
-    "vm-mcp": "src/index.js"
+    "photoclassifier": "src/index.js"
   },
   "files": [
     "src/index.js"
