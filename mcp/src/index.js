@@ -140,11 +140,11 @@ async function getImageLink(category, num) {
     }
 
     const res = [];
-    if (n > categoryData.length) {
+    if (num > categoryData.length) {
         for (let i = 0; i < categoryData.length; i++) {
             res.push({
                 type: "text",
-                text: categoryData[i].url + "  "
+                text: categoryData[i].url + "\n"
             });
         }
     } else {

@@ -30,15 +30,16 @@ var (
 
 // Config 存储所有必要的输入参数
 type Config struct {
-	ImageFolder    string `json:"image_folder"`
-	ModelToken     string `json:"model_token"`      // API Key
-	LLMType        string `json:"llm_type"`         // gemini / openai
-	ModelCustomURL string `json:"model_custom_url"` // 如果模型有自定义地址
-	Dir            string `json:"dir"`              // 的目录
-	TargetClasses  string `json:"target_classes"`   // 目标图片类别列表 (逗号分隔)
-	ModelName      string `json:"model_name"`       // 模型名称
-	ProxyURL       string `json:"proxy_url"`        // 代理地址 (可选)
-	ClassIdx       string `json:"class_idx"`        // 分类索引 (可选)
+	ImageFolder     string `json:"image_folder"`
+	ModelToken      string `json:"model_token"`      // API Key
+	LLMType         string `json:"llm_type"`         // gemini / openai
+	ModelCustomURL  string `json:"model_custom_url"` // 如果模型有自定义地址
+	Dir             string `json:"dir"`              // 的目录
+	TargetClasses   string `json:"target_classes"`   // 目标图片类别列表 (逗号分隔)
+	ModelName       string `json:"model_name"`       // 模型名称
+	ProxyURL        string `json:"proxy_url"`        // 代理地址 (可选)
+	ClassIdx        string `json:"class_idx"`        // 分类索引 (可选)
+	IntervalSeconds int    `json:"interval_seconds"` // 间隔时间 (秒)
 }
 
 // --- 2. GitHub API 结构体 ---
@@ -191,7 +192,7 @@ func classifyImageWithModel(ctx context.Context, imageContent []byte, content st
 		return nil, 0, err
 	}
 	
-	time.Sleep(2 * time.Second)
+	time.Sleep(time.Duration(config.IntervalSeconds) * time.Second)
 	if result.Text() != "" {
 		matches := cateRegex.FindAllString(result.Text(), -1)
 		cateRes := new(CateInfo)
