@@ -54,3 +54,16 @@ node src/index.js
 
 请参阅 [GitHub 官方文档](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token)
 创建 PAT。**在权限 (Scopes) 中，必须勾选 `repo` 权限，以确保程序有权限向您的仓库写入文件。**
+
+## 上传npx
+```
+npm init
+
+修改package.json的bin
+
+npm login
+npm publish
+
+npm cache clean --force
+npx photoclassifier@latest
+```

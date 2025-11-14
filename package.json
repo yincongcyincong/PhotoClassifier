@@ -1,8 +1,8 @@
 {
   "name": "photoclassifier",
-  "version": "1.0.1",
+  "version": "1.0.4",
   "description": "npm login",
-  "main": "index.js",
+  "main": "mcp/src/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -18,5 +18,18 @@
   "homepage": "https://github.com/yincongcyincong/PhotoClassifier#readme",
   "workspaces": [
     "mcp"
-  ]
+  ],
+  "bin": {
+    "photoclassifier": "mcp/src/index.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.0.1",
+    "@types/node-fetch": "^2.6.12",
+    "@yincongcyincong/victoriametrics-mcp-server": "^1.0.5",
+    "node-fetch": "^3.3.2"
+  },
+  "devDependencies": {
+    "shx": "^0.3.4",
+    "typescript": "^5.6.2"
+  }
 }

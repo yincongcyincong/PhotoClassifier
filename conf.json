@@ -1,6 +1,6 @@
 {
   "image_folder": "./tmp",
-  "model_token": "AIzaSyCcDKcYGzdsCi68FualKxgPuMlPQzFOeyU",
+  "model_token": "xxx",
   "llm_type": "gemini",
   "model_custom_url": "",
   "dir": "photos",
